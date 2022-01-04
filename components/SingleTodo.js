@@ -1,6 +1,6 @@
 import { Box, Divider, Heading, Text, Tag } from "@chakra-ui/react";
 
-const SingleTodo = ({ todo }) => {
+const SingleTodo = ({ todo, openHandler }) => {
 	const getDateInMonthDayYear = (date) => {
 		const d = new Date(date);
 		const options = {
@@ -23,6 +23,7 @@ const SingleTodo = ({ todo }) => {
 			borderRadius="lg"
 			overflow="hidden"
 			p="4"
+			onClick={() => openHandler(todo)}
 		>
 			<Heading size="md" mt="3">
 				{todo.title}

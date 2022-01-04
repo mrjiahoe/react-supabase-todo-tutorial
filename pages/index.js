@@ -1,5 +1,5 @@
 import { useDisclosure } from "@chakra-ui/hooks";
-import { Box, SimpleGrid, Text, HStack, Tag } from "@chakra-ui/react";
+import { Box, SimpleGrid, HStack, Tag } from "@chakra-ui/react";
 import Head from "next/head";
 import { useRouter } from "next/router";
 import { useEffect, useRef, useState } from "react";
@@ -11,6 +11,7 @@ import { supabaseClient } from "../lib/client";
 const Home = () => {
 	const initialRef = useRef();
 	const [todos, setTodos] = useState([]);
+	const [todo, setTodo] = useState(null);
 
 	const router = useRouter();
 	const { isOpen, onOpen, onClose } = useDisclosure();
@@ -35,7 +36,7 @@ const Home = () => {
 					}
 				});
 		}
-	});
+	}, [user]);
 
 	useEffect(() => {
 		const todoListener = supabaseClient
@@ -43,7 +44,17 @@ const Home = () => {
 			.on("*", (payload) => {
 				const newTodo = payload.new;
 				setTodos((oldTodos) => {
-					const newTodos = [...oldTodos, newTodo];
+					const exists = oldTodos.find((todo) => todo.id === newTodo.id);
+					let newTodos;
+					if (exists) {
+						const oldTodoIndex = oldTodos.findIndex(
+							(obj) => obj.id === newTodo.id
+						);
+						oldTodos[oldTodoIndex] = newTodo;
+						newTodos = oldTodos;
+					} else {
+						newTodos = [...oldTodos, newTodo];
+					}
 					newTodos.sort((a, b) => b.id - a.id);
 					return newTodos;
 				});
@@ -54,6 +65,11 @@ const Home = () => {
 			todoListener.unsubscribe();
 		};
 	}, []);
+
+	const openHandler = (clickedTodo) => {
+		setTodo(clickedTodo);
+		onOpen();
+	};
 
 	return (
 		<div>
@@ -67,7 +83,13 @@ const Home = () => {
 			</Head>
 			<main>
 				<Navbar onOpen={onOpen} />
-				<ManageTodo isOpen={isOpen} onClose={onClose} initialRef={initialRef} />
+				<ManageTodo
+					isOpen={isOpen}
+					onClose={onClose}
+					initialRef={initialRef}
+					todo={todo}
+					setTodo={setTodo}
+				/>
 				<HStack m="10" spacing="4" justify="center">
 					<Box>
 						<Tag bg="green.500" borderRadius="3xl" size="sm" mt="1" />
@@ -84,7 +106,7 @@ const Home = () => {
 					m="10"
 				>
 					{todos.map((todo) => (
-						<SingleTodo todo={todo} key={todo.id} />
+						<SingleTodo todo={todo} key={todo.id} openHandler={openHandler} />
 					))}
 				</SimpleGrid>
 			</main>
